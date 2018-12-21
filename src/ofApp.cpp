@@ -19,7 +19,7 @@
 		Moving the object with a mouse is not supported.
 	To delete an object, press d while mouse is holding onto the object.
 
-	For animation:
+	To ray trace multiple frames:
 	Default frame rate is 24
 	To set KeyFrame for an object:
 		Press and hold onto the object, then press
