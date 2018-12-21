@@ -1,6 +1,8 @@
 # cs116A_CG_Ray_Tracing
 
 A basic ray tracer that uses ray tracing to render an image.
+This application is created with [openFrameworks](https://openframeworks.cc/).
+
 
 ![RayTracing Sample](/bin/data/RayTraced.jpg)
 
