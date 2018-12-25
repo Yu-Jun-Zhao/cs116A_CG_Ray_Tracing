@@ -1,6 +1,7 @@
 # cs116A_CG_Ray_Tracing
 
-A basic ray tracer that uses ray tracing to render an image.
+Ray Tracing is an image rendering technique.
+This application uses this technique to render multiple 3d images.
 This application is created with [openFrameworks](https://openframeworks.cc/).
 
 
