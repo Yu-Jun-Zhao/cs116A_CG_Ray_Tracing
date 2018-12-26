@@ -111,7 +111,7 @@ ofColor ofApp::shade(const glm::vec3 &poi, const glm::vec3 &norm,
 		glm::vec3 lightv_n = glm::normalize(light_vector);
 		float lightv_length = glm::length(light_vector); // Light vector length
 
-		float lightIntensity = (light->lightIntensity / (glm::pow2(lightv_length)));
+		float lightIntensity = (light->getLightIntensity() / (glm::pow2(lightv_length)));
 
 		//addUpColor += (specularColor + diffuseColor);
 

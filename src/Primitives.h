@@ -92,6 +92,10 @@ public:
 		return (glm::intersectRaySphere(ray.p, ray.d, position, radius, point, normal));
 	}
 
+	void setRadius(float rad) {
+		radius = rad;
+	}
+
 	void draw();
 };
 
@@ -106,12 +110,15 @@ class Mesh : public SceneObject {
 //  General purpose plane 
 //
 class Plane : public SceneObject {
-public:
+protected:
 	// common data
 	ofPlanePrimitive plane;
 	glm::vec3 normal = glm::vec3(0, 1, 0);
 	float width;
 	float height;
+
+public:
+	
 
 	Plane(glm::vec3 p, glm::vec3 n, ofColor diffuse = ofColor::white, float w = 40, float h = 40): 
 		normal(n),width(w), height(h) {
@@ -135,19 +142,17 @@ public:
 };
 
 // view plane for render camera
-// 
-class  ViewPlane : public Plane {
-public:
 //  To define an infinite plane, we just need a point and normal.
 //  The ViewPlane is a finite plane so we need to define the boundaries.
 //  We will define this in terms of min, max  in 2D.  
 //  (in local 2D space of the plane)
 //  ultimately, will want to locate the ViewPlane with RenderCam anywhere
 //  in the scene, so it is easier to define the View rectangle in a local'
-//  coordinate system.
-//
-	glm::vec2 min, max;
+//  coordinate system. 
 
+class  ViewPlane : public Plane {
+public:
+	glm::vec2 min, max;
 
 	ViewPlane(glm::vec2 p0, glm::vec2 p1) { min = p0; max = p1; obj_name = "ViewPlane"; }
 
@@ -187,8 +192,10 @@ public:
 // Most basic light class, point light
 // Since it looks like a sphere, it inherits from the Sphere class.
 class Light :public Sphere {
-public:
+protected:
 	float lightIntensity;
+
+public:
 	
 	Light(glm::vec3 p, ofColor diffuse = ofColor::white, float light = 0.5f):
 		lightIntensity(light){
@@ -205,6 +212,9 @@ public:
 
 	//void intersect
 	void draw();
+
+	//getters
+	float getLightIntensity() { return lightIntensity; }
 };
 
 
@@ -222,6 +232,7 @@ public:
 		intersectable_by_light = false;
 		obj_name = "RenderCam";
 	}
+
 	Ray getRay(float u, float v);
 	void draw() { ofDrawBox(position, 1.0); };
 	void drawFrustum();
