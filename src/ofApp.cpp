@@ -98,7 +98,7 @@ ofColor ofApp::shade(const glm::vec3 &poi, const glm::vec3 &norm,
 	ofColor ambientColor = AmbientCoefficient * diffuse;
 	ofColor addUpColor(ambientColor);
 	glm::vec3 normal = glm::normalize(norm);
-	glm::vec3 normal_cam_v = glm::normalize(renderCam.position - poi);
+	glm::vec3 normal_cam_v = glm::normalize(renderCam.getPosition() - poi);
 
 
 	for (Light *light : lightSources) {
@@ -106,7 +106,7 @@ ofColor ofApp::shade(const glm::vec3 &poi, const glm::vec3 &norm,
 		ofColor diffuseColor = diffuse; 
 		ofColor specularColor = specular;
 
-		glm::vec3 light_vector = light->position - poi;
+		glm::vec3 light_vector = light->getPosition() - poi;
 
 		glm::vec3 lightv_n = glm::normalize(light_vector);
 		float lightv_length = glm::length(light_vector); // Light vector length
@@ -120,10 +120,10 @@ ofColor ofApp::shade(const glm::vec3 &poi, const glm::vec3 &norm,
 		// Calculate the distance between the shape surface and the shape center
 		// Create an abstract test point that is slightly above the shape surface
 		// To prevent shadow rounding errors
-		glm::vec3 centerToPointDir = glm::normalize(poi - interObj->position);
-		float centerToPointLength = glm::length(poi - interObj->position);
+		glm::vec3 centerToPointDir = glm::normalize(poi - interObj->getPosition());
+		float centerToPointLength = glm::length(poi - interObj->getPosition());
 		float newLength = centerToPointLength + 0.05f;
-		glm::vec3 testP = (interObj->position + centerToPointDir * newLength);
+		glm::vec3 testP = (interObj->getPosition() + centerToPointDir * newLength);
 		
 
 		// Calculate Shadows
@@ -166,7 +166,7 @@ ofColor ofApp::shade(const glm::vec3 &poi, const glm::vec3 &norm,
 
 	// Calculate Reflection
 	// this will never stop if there is always a reflectedClosestObjIndex
-	if (interObj->b_glazed) {
+	if (interObj->is_bglazed()) {
 		glm::vec3 rp, rn;
 		glm::vec3 reflectedRayDir = 2 * (glm::dot(normal, normal_cam_v)) * normal - normal_cam_v;
 		int reflectedClosestObjIndex = findClosestIndex(Ray(poi, glm::normalize(reflectedRayDir)), rp, rn);
@@ -175,8 +175,8 @@ ofColor ofApp::shade(const glm::vec3 &poi, const glm::vec3 &norm,
 			//found reflected obj
 			SceneObject *reflectedObj = scene[reflectedClosestObjIndex];
 			addUpColor += shade(rp, rn,
-				reflectedObj->diffuseColor,
-				reflectedObj->specularColor,
+				reflectedObj->getDiffuseColor(),
+				reflectedObj->getSpecularColor(),
 				power, reflectedObj);
 		}
 	}
@@ -215,7 +215,7 @@ ofColor ofApp::SSAAliasing(const float centerU, const float centerV, const float
 				int indexIntersected = findClosestIndex(ray, p1, norm1);
 
 				ofColor intersectedColor = (indexIntersected >= 0) ? 
-					shade(p1, norm1, scene[indexIntersected]->diffuseColor, scene[indexIntersected]->specularColor, 
+					shade(p1, norm1, scene[indexIntersected]->getDiffuseColor(), scene[indexIntersected]->getSpecularColor(), 
 					phongPower, scene[indexIntersected]) : ofColor::black;
 				
 				r += intersectedColor.r;
@@ -237,8 +237,8 @@ ofColor ofApp::SSAAliasing(const float centerU, const float centerV, const float
 
 		Ray midMid = renderCam.getRay(centerU, centerV);
 		int mm = findClosestIndex(midMid, p, norm);
-		ofColor mmc = (mm >= 0) ? shade(p, norm, scene[mm]->diffuseColor,
-			scene[mm]->specularColor, phongPower, scene[mm]) : ofColor::black;
+		ofColor mmc = (mm >= 0) ? shade(p, norm, scene[mm]->getDiffuseColor(),
+			scene[mm]->getSpecularColor(), phongPower, scene[mm]) : ofColor::black;
 		return mmc;
 	}
 		
@@ -269,10 +269,10 @@ void ofApp::setup() {
 	sideCam.setPosition(40, 0, 0);
 	sideCam.lookAt(glm::vec3(0, 0, 0));
 
-	previewCam.setPosition(renderCam.position + glm::vec3(0,0,0));
+	previewCam.setPosition(renderCam.getPosition() + glm::vec3(0,0,0));
 	// for calculating the field of view angle
 	float x = renderCam.view.width() / 2;
-	float y = glm::length(renderCam.position - renderCam.view.position);
+	float y = glm::length(renderCam.getPosition() - renderCam.view.getPosition());
 
 	// 180/PI for converting radian to degree, times 2 since atan(x/y) only gives out half of the degree
 	float fovDegree = (atan(x/y) * 180/PI) * 2;
@@ -321,17 +321,17 @@ void ofApp::update() {
 			
 			for (unsigned int i = 0; i < scene.size(); i++) {
 				SceneObject *obj = scene[i];
-				if (obj->animatable && obj->b_startFrame && obj->b_endFrame) {
-					glm::vec3 slope = obj->endFramePos - obj->startFramePos;
-					obj->position = linearUpdate(currentFrame, obj->startFramePos, slope, totalFrame);
+				if (obj->is_animatable() && obj->is_b_SandEKeyFrameSet()) {
+					glm::vec3 slope = obj->getEndFramePos() - obj->getStartFramePos();
+					obj->setPosition(linearUpdate(currentFrame, obj->getStartFramePos(), slope, totalFrame));
 				}
 			}
 
 			for (unsigned int i = 0; i < lightSources.size(); i++) {
 				Light *light = lightSources[i];
-				if (light->animatable && light->b_startFrame && light->b_endFrame) {
-					glm::vec3 slope = light->endFramePos - light->startFramePos;
-					light->position = linearUpdate(currentFrame, light->startFramePos, slope, totalFrame);
+				if (light->is_animatable() && light->is_b_SandEKeyFrameSet()) {
+					glm::vec3 slope = light->getEndFramePos() - light->getStartFramePos();
+					light->setPosition(linearUpdate(currentFrame, light->getStartFramePos(), slope, totalFrame));
 				}
 			}
 		}
@@ -431,10 +431,10 @@ void ofApp::draw() {
 	ofDrawBitmapString(str, ofGetWindowWidth() - 180, 90);
 
 	if (objPicked && !mainCam.getMouseInputEnabled()) {
-		if (interSectedObj->animatable) {
+		if (interSectedObj->is_animatable()) {
 			str = "";
-			str += "\nkey1 at: " + to_string(interSectedObj->startFramePos.x) + ", " + to_string(interSectedObj->startFramePos.y) + ", " + to_string(interSectedObj->startFramePos.z);
-			str += "\nkey2 at: " + to_string(interSectedObj->endFramePos.x) + ", " + to_string(interSectedObj->endFramePos.y) + ", " + to_string(interSectedObj->endFramePos.z);
+			str += "\nkey1 at: " + to_string(interSectedObj->getStartFramePos().x) + ", " + to_string(interSectedObj->getStartFramePos().y) + ", " + to_string(interSectedObj->getStartFramePos().z);
+			str += "\nkey2 at: " + to_string(interSectedObj->getEndFramePos().x) + ", " + to_string(interSectedObj->getEndFramePos().y) + ", " + to_string(interSectedObj->getEndFramePos().z);
 			ofDrawBitmapString(str, 0, 250);
 		}
 	}
@@ -496,8 +496,8 @@ void ofApp::keyReleased(int key) {
 		break;
 	case 'e':
 		if (objPicked && !mainCam.getMouseInputEnabled()) {
-			if (interSectedObj->animatable) {
-				interSectedObj->setEndFrame(interSectedObj->position);
+			if (interSectedObj->is_animatable()) {
+				interSectedObj->setEndFrame(interSectedObj->getPosition());
 			}
 		}
 		break;
@@ -513,7 +513,7 @@ void ofApp::keyReleased(int key) {
 		break;
 	case 'm': // stop or move object
 		if (objPicked && !mainCam.getMouseInputEnabled()) {
-			interSectedObj->animatable = !interSectedObj->animatable;
+			interSectedObj->setAnimatable(!interSectedObj->is_animatable());
 		}
 		break;
 	case 'n':
@@ -525,8 +525,8 @@ void ofApp::keyReleased(int key) {
 		break;
 	case 's':
 		if (objPicked && !mainCam.getMouseInputEnabled()) {
-			if (interSectedObj->animatable) {
-				interSectedObj->setStartFrame(interSectedObj->position);
+			if (interSectedObj->is_animatable()) {
+				interSectedObj->setStartFrame(interSectedObj->getPosition());
 			}
 		}
 		break;
@@ -613,11 +613,11 @@ void ofApp::mouseDragged(int x, int y, int button) {
 	// Drag enabled only if an object is selectet/picked AND
 	// mainCam movement is disabled.
 	if (objPicked && !mainCam.getMouseInputEnabled()) {
-		glm::vec3 objScreenPos = theCam->worldToScreen(interSectedObj->position);
+		glm::vec3 objScreenPos = theCam->worldToScreen(interSectedObj->getPosition());
 		glm::vec2 currentPoint = glm::vec2(x, y);
 		glm::vec2 offset = currentPoint - lastXYpoint;
 		objScreenPos += glm::vec3(offset, 0.0);
-		interSectedObj->position = theCam->screenToWorld(objScreenPos);
+		interSectedObj->setPosition(theCam->screenToWorld(objScreenPos));
 		lastXYpoint = currentPoint;
 	}
 }
@@ -635,12 +635,12 @@ void ofApp::mousePressed(int x, int y, int button) {
 	float closest = INT_MAX; // infinity
 	for (unsigned int i = 0; i < scene.size(); i++) {
 		SceneObject *obj = scene[i];
-		if (obj->intersectable_by_cam) {
+		if (obj->is_intersectable_by_cam()) {
 			Ray ray(theCam->getPosition(), normal_d);
 			if (obj->intersect(ray, intersectionPoint, norm)) {
 				objPicked = true;
 				interSectedObj = obj;
-				float distance = glm::length(interSectedObj->position - theCam->getPosition());
+				float distance = glm::length(interSectedObj->getPosition() - theCam->getPosition());
 				if (closest > distance) {
 					closest = distance;
 					index = i;
@@ -737,16 +737,16 @@ int ofApp::findClosestIndex(const Ray & ray, glm::vec3 & p, glm::vec3 & norm) {
 void ofApp::resetAllToStartFrame() {
 	for (unsigned int i = 0; i < scene.size(); i++) {
 		SceneObject *obj = scene[i];
-		if (obj->animatable && obj->b_startFrame && obj->b_endFrame) {
-			obj->position = obj->startFramePos;
+		if (obj->is_animatable() && obj->is_b_SandEKeyFrameSet()) {
+			obj->setPosition(obj->getStartFramePos());
 
 		}
 	}
 
 	for (unsigned int i = 0; i < lightSources.size(); i++) {
 		Light *light = lightSources[i];
-		if (light->animatable && light->b_startFrame && light->b_endFrame) {
-			light->position = light->startFramePos;
+		if (light->is_animatable() && light->is_b_SandEKeyFrameSet()) {
+			light->setPosition(light->getStartFramePos());
 
 		}
 	}

@@ -22,42 +22,59 @@ public:
 //  Base class for any renderable object in the scene
 //
 class SceneObject {
-public:
-	static int id;
+private:
+	glm::vec3 startFramePos = glm::vec3(0, 0, 0); // place holder value
+	glm::vec3 endFramePos = glm::vec3(0, 0, 0);
 
-	// common data
-	string obj_name = "object";
-	glm::vec3 position = glm::vec3(0, 0, 0);
-	bool intersectable_by_cam = true; // for mouse picking
-	bool intersectable_by_light = true;
 	bool b_glazed = false;  // for mirror 
 	bool animatable = true; // all object by default are animatable
-	glm::vec3 startFramePos = glm::vec3(0,0,0); // place holder value
-	glm::vec3 endFramePos = glm::vec3(0,0,0);
 	bool b_startFrame = false;
 	bool b_endFrame = false;
-	// material properties (we will ultimately replace this with a Material class - TBD)
-	//
+
+protected:
+	glm::vec3 position = glm::vec3(0, 0, 0);
 	ofColor diffuseColor = ofColor::lightBlue;    // default colors - can be changed.
 	ofColor specularColor = ofColor::lightGray;
-	
 
+	bool intersectable_by_cam = true; // for mouse picking
+	bool intersectable_by_light = true;
+
+public:
+	static int id;
+	// common data
+	string obj_name = "object";
+	
+	// Functions that must be overrided
 	virtual void draw() = 0;    
 	virtual bool intersect(const Ray &ray, glm::vec3 &point, glm::vec3 &normal) { cout << "SceneObject::intersect" << endl; return false; }
+	
+	// Getter and Setter
 	string name() { return obj_name; }
 	void setMirrorAble(bool b) { b_glazed = b; }
 	void setAnimatable(bool b) { animatable = b; }
 	void setStartFrame(glm::vec3 pos) { startFramePos = pos; b_startFrame = true; }
 	void setEndFrame(glm::vec3 pos) { endFramePos = pos;  b_endFrame = true;}
-	
+	void setPosition(glm::vec3 pos) { position.x = pos.x; position.y = pos.y, position.z = pos.z; }
+
+	glm::vec3 getPosition() const { return position; }
+	glm::vec3 getStartFramePos() const { return startFramePos; }
+	glm::vec3 getEndFramePos() const { return endFramePos; }
+	ofColor getDiffuseColor() const { return diffuseColor; }
+	ofColor getSpecularColor() const { return specularColor; }
+	bool is_bglazed() const { return b_glazed; }
+	bool is_animatable() const { return animatable; }
+	bool is_b_SandEKeyFrameSet() const { return b_startFrame && b_endFrame; }
+	bool is_intersectable_by_cam() const { return intersectable_by_cam; }
+	bool is_intersectable_by_light() const { return intersectable_by_light; }
 };
 
 //  General purpose sphere  (assume parametric)
 //
 class Sphere : public SceneObject {
-public:
+protected:
 	float radius;
-
+public:
+	
 	Sphere(glm::vec3 p, float r, ofColor diffuse = ofColor::lightGray):radius(r) {
 		position = p; 
 		diffuseColor = diffuse;
