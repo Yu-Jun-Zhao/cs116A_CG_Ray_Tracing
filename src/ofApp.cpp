@@ -196,82 +196,38 @@ ofColor ofApp::shade(const glm::vec3 &poi, const glm::vec3 &norm,
  * @return the average color collected from the 9 smaller pixels or centerPointColor if on_or_off == false 
  */
 
-// Hard coding the rays
 ofColor ofApp::SSAAliasing(const float centerU, const float centerV, const float pixelW,
 	const float pixelH, bool on_or_off) {
 	
 	if (on_or_off) {
 		float smallPixelW = pixelW / 3;
 		float smallPixelH = pixelH / 3;
+		float topLeftU = centerU - smallPixelW;
+		float topLeftV = centerV - smallPixelH;
 
 		glm::vec3 p1, norm1;
-		glm::vec3 p2, norm2;
-		glm::vec3 p3, norm3;
-		glm::vec3 p4, norm4;
-		glm::vec3 p5, norm5;
-		glm::vec3 p6, norm6;
-		glm::vec3 p7, norm7;
-		glm::vec3 p8, norm8;
-		glm::vec3 p9, norm9;
-
-		// top section
-		Ray topLeft = renderCam.getRay(centerU - smallPixelW, centerV - smallPixelH);
-		Ray topMid = renderCam.getRay(centerU, centerV - smallPixelH);
-		Ray topRight = renderCam.getRay(centerU + smallPixelW, centerV - smallPixelH);
-	
-		// middle section
-		Ray midLeft = renderCam.getRay(centerU - smallPixelW, centerV);
-		Ray midMid = renderCam.getRay(centerU, centerV);
-		Ray midRight = renderCam.getRay(centerU + smallPixelW, centerV);
-	
-		// bottom section
-		Ray bottomLeft = renderCam.getRay(centerU - smallPixelW, centerV + smallPixelH);
-		Ray bottomMid = renderCam.getRay(centerU, centerV + smallPixelH);
-		Ray bottomRight = renderCam.getRay(centerU + smallPixelW, centerV + smallPixelH);
-	
-		// INDEXES
-		int tl = findClosestIndex(topLeft, p1, norm1);
-		int tm = findClosestIndex(topMid, p2, norm2);
-		int tr = findClosestIndex(topRight, p3, norm3);
-		int ml = findClosestIndex(midLeft, p4, norm4);
-		int mm = findClosestIndex(midMid, p5, norm5);
-		int mr = findClosestIndex(midRight, p6, norm6);
-		int bl = findClosestIndex(bottomLeft, p7, norm7);
-		int bm = findClosestIndex(bottomMid, p8, norm8);
-		int br = findClosestIndex(bottomRight, p9, norm9);
-	
-		ofColor tlc = (tl >= 0) ? shade(p1, norm1, scene[tl]->diffuseColor,
-			scene[tl]->specularColor, phongPower, scene[tl]) : ofColor::black;
-
-		ofColor tmc = (tm >= 0) ? shade(p2, norm2, scene[tm]->diffuseColor,
-			scene[tm]->specularColor, phongPower, scene[tm]) : ofColor::black;
-
-		ofColor trc = (tr >= 0) ? shade(p3, norm3, scene[tr]->diffuseColor,
-			scene[tr]->specularColor, phongPower, scene[tr]) : ofColor::black;
-	
-		ofColor mlc = (ml >= 0) ? shade(p4, norm4, scene[ml]->diffuseColor,
-			scene[ml]->specularColor, phongPower, scene[ml]) : ofColor::black;
-
-		ofColor mmc = (mm >= 0) ? shade(p5, norm5, scene[mm]->diffuseColor,
-			scene[mm]->specularColor, phongPower, scene[mm]) : ofColor::black;
-
-		ofColor mrc = (mr >= 0) ? shade(p6, norm6, scene[mr]->diffuseColor,
-			scene[mr]->specularColor, phongPower, scene[mr]) : ofColor::black;
-	
-		ofColor blc = (bl>= 0) ? shade(p7, norm7, scene[bl]->diffuseColor,
-			scene[bl]->specularColor, phongPower, scene[bl]) : ofColor::black;
-
-		ofColor bmc = (bm >= 0) ? shade(p8, norm8, scene[bm]->diffuseColor,
-			scene[bm]->specularColor, phongPower, scene[bm]) : ofColor::black;
-
-		ofColor brc = (br >= 0) ? shade(p9, norm9, scene[br]->diffuseColor,
-			scene[br]->specularColor, phongPower, scene[br]) : ofColor::black;
-	
-	
+		float r = 0, g = 0, b = 0;
 		ofColor avgColor;
-		avgColor.r = (tlc.r + tmc.r + trc.r + mlc.r + mmc.r + mrc.r + blc.r + bmc.r + brc.r) / 9;
-		avgColor.b = (tlc.b + tmc.b + trc.b + mlc.b + mmc.b + mrc.b + blc.b + bmc.b + brc.b) / 9;
-		avgColor.g = (tlc.g + tmc.g + trc.g + mlc.g + mmc.g + mrc.g + blc.g + bmc.g + brc.g) / 9;
+
+		for (int row = 0; row < 3; row++) {
+			for (int col = 0; col < 3; col++) {
+				Ray ray = renderCam.getRay(topLeftU + smallPixelW * col, topLeftV + smallPixelH * row);
+				int indexIntersected = findClosestIndex(ray, p1, norm1);
+
+				ofColor intersectedColor = (indexIntersected >= 0) ? 
+					shade(p1, norm1, scene[indexIntersected]->diffuseColor, scene[indexIntersected]->specularColor, 
+					phongPower, scene[indexIntersected]) : ofColor::black;
+				
+				r += intersectedColor.r;
+				g += intersectedColor.g;
+				b += intersectedColor.b;
+			}
+		}
+	
+	
+		avgColor.r = r / 9;
+		avgColor.g = g / 9;
+		avgColor.b = b / 9;
 	
 		return avgColor;
 	}
