@@ -3,7 +3,7 @@
 Ray Tracing is an image rendering technique.
 This application uses this technique to render multiple 3d images.
 This application is created with [openFrameworks](https://openframeworks.cc/).
-
+If you are using visual studio, please run in release mode.
 
 ![RayTracing Sample](/bin/data/RayTraced.jpg)
 
